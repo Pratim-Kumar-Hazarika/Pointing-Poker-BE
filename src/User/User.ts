@@ -1,5 +1,5 @@
 import { WebSocket } from "ws";
-import { IncomingMessage, MESSAGE_TYPES, OutgoingMessage } from "./types";
+import { IncomingMessage, MESSAGE_TYPES, OutgoingMessage } from './types'
 
 export class User{
     private id:string;
