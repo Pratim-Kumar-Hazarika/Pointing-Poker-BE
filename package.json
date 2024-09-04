@@ -1,0 +1,19 @@
+{
+  "name": "pointing-poker-be",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "start": " node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/ws": "^8.5.12",
+    "redis": "^4.7.0",
+    "typescript": "^5.5.4",
+    "ws": "^8.18.0"
+  }
+}
