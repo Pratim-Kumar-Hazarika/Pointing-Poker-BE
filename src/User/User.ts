@@ -36,9 +36,6 @@ export class User{
                 ///redis unsubscribe
             }
 
-            if(parsedMessage.method ===MESSAGE_TYPES.SEND_MESSAGE){
-                   ///send messages
-            }
         });
     }
 }

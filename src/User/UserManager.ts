@@ -1,5 +1,6 @@
 import { WebSocket } from "ws";
 import { User } from "./User";
+import { SubscriptionManager } from "../Subscriptions/SubscriptionManager";
 
 
 export class UserManager {
@@ -14,7 +15,7 @@ export class UserManager {
     public static getInstance(){
         if(!this.instance){
              this.instance = new UserManager()
-
+  
         }
         return this.instance;
     }
@@ -30,8 +31,7 @@ export class UserManager {
     private registerOnClose(ws:WebSocket,id:string){
             ws.on("close",()=>{
                 this.users.delete(id)
-
-                ///unsubscribe redis
+                SubscriptionManager.getInstance().userLeft(id)
             })
         
     }
