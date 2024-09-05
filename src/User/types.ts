@@ -6,9 +6,8 @@ export enum MESSAGE_TYPES {
 export type OutgoingMessage = {
     method:MESSAGE_TYPES.SEND_MESSAGE,
     data:{
-        roomId:string;
+        channelId:string;
         content:string;
-        userId:string;
     }
 }
 
