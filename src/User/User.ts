@@ -1,5 +1,6 @@
 import { WebSocket } from "ws";
 import { IncomingMessage, MESSAGE_TYPES, OutgoingMessage } from './types'
+import { SubscriptionManager } from "../Subscriptions/SubscriptionManager";
 
 export class User{
     private id:string;
@@ -29,13 +30,15 @@ export class User{
         this.ws.on('message', (message:string) =>{
             const parsedMessage:IncomingMessage = JSON.parse(message);
             if(parsedMessage.method ===MESSAGE_TYPES.SUBSCRIBE ){
-                    ///redis subscribe
+                parsedMessage.params.forEach(s=>SubscriptionManager.getInstance().subscribe(this.id, s));
             }
 
             if(parsedMessage.method === MESSAGE_TYPES.UNSUBSCRIBE){
-                ///redis unsubscribe
+                parsedMessage.params.forEach(s=>SubscriptionManager.getInstance().unsubscribe(this.id,s));
             }
-
+            if(parsedMessage.method === MESSAGE_TYPES.SEND_MESSAGE){
+                SubscriptionManager.getInstance().redisPublishHandler(parsedMessage.data.channelId,parsedMessage.data.content) 
+            }
         });
     }
 }
