@@ -22,3 +22,18 @@ export type UnsubscribeMessage = {
 }
 
 export type IncomingMessage = SubscribeMessage | UnsubscribeMessage | OutgoingMessage;
+
+
+// Structure
+// {
+//     "method": "SUBSCRIBE",
+//     "params": ["room1"]
+// }
+// {
+//     "method": "SENDMESSAGE",
+//     "data": {
+//       "channelId": "room1",
+//       "content": "Hey"
+//     }
+//   }
+  
