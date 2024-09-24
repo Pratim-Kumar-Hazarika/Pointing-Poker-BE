@@ -22,13 +22,15 @@ export class User{
         this.subscriptions = this.subscriptions.filter(x => x!== subscription);
     }
 
-    emit(message:OutgoingMessage){
-        this.ws.send(JSON.stringify(message));
+    emit(message:any){
+        console.log("messageEMit",message)
+        this.ws.send(message);
     }
 
     private addEventListener(){
         this.ws.on('message', (message:string) =>{
             const parsedMessage:IncomingMessage = JSON.parse(message);
+            console.log(parsedMessage)
             if(parsedMessage.method ===MESSAGE_TYPES.SUBSCRIBE ){
                 parsedMessage.params.forEach(s=>SubscriptionManager.getInstance().subscribe(this.id, s));
             }
@@ -37,7 +39,8 @@ export class User{
                 parsedMessage.params.forEach(s=>SubscriptionManager.getInstance().unsubscribe(this.id,s));
             }
             if(parsedMessage.method === MESSAGE_TYPES.SEND_MESSAGE){
-                SubscriptionManager.getInstance().redisPublishHandler(parsedMessage.data.channelId,parsedMessage.data.content) 
+
+                SubscriptionManager.getInstance().redisPublishHandler(parsedMessage.data.channelId,JSON.stringify(parsedMessage.data),this.id) 
             }
         });
     }

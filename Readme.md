@@ -13,3 +13,10 @@
 
 OR
 Give option to select points 
+
+Total Participants ✅
+    Joining ✅
+    Leaving ✅
+
+Voted
+Pending 
