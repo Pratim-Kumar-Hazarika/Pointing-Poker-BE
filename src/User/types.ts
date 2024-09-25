@@ -120,6 +120,20 @@ const participantPayload ={
     }
   
 }
+const revealEstimatesPlayload = {
+    "method": "SENDMESSAGE",
+    "data": {
+      "channelId": "room1",
+      "reveal":true
+    }
+}
+const restimatePayload = {
+    "method": "SENDMESSAGE",
+    "data": {
+      "channelId": "room1",
+      "restimate":true
+    }
+}
 type User = Array<{name:string;id:string}>
 export type LiveRoomsData ={
     totalParticipants:User

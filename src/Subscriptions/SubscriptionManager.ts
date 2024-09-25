@@ -94,12 +94,48 @@ export class SubscriptionManager {
             if (!this.publishClient.isOpen) {
                 await this.publishClient.connect();  // Ensure the client is open before publishing
             }
-            // Engine code
-           this.liveRoomDataHandler(channelId, message, userId)
-            this.publishClient.publish(channelId, message);
+            // 
+            const messageX = JSON.parse(message)
+            if(messageX.vote){
+                // Engine
+                this.liveRoomDataHandler(channelId, message, userId)
+            }
+            // Check if moderator
+            if(messageX.reveal){
+                this.revealVotesHandler(channelId)
+            }
+            if(messageX.restimate){
+                this.restimateHandler(channelId)
+            }
+          
         } catch (error) {
             console.error("Error publishing to Redis:", error);
         }
+    }
+    private restimateHandler(channelId:string){
+        // **Check if moderator
+        const liveRoom = this.liveRoomData.get(channelId);
+        if(!liveRoom){
+            return;
+
+        }
+        liveRoom[0].chartData=[]
+        this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
+}
+    private revealVotesHandler(channelId:string){
+        // **Check if moderator
+        const liveRoom = this.liveRoomData.get(channelId);
+        if(!liveRoom){
+            return;
+
+        }
+        liveRoom[0].chartTemp.forEach((voters, point) => {
+            liveRoom[0].chartData.push({
+              point: point.toString(), 
+              voters: voters 
+            });
+          });
+     this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
     }
     private liveRoomDataHandler(channelId: string, message: string, userId: string) {
         console.log("ChannelId", channelId);
