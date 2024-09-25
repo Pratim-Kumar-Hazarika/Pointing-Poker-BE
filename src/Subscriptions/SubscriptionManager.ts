@@ -54,12 +54,29 @@ export class SubscriptionManager {
         if(!userExists){
             // Add user to live room
             liveRoom[0].totalParticipants.push({name: `Pratim-${userId}`, id: userId})
+
         }
-        console.log("LIVEEE")
-        console.log( liveRoom[0].totalParticipants)
         if (this.reverseSubscriptions.get(subscription)?.length === 1) {
             this.redisClient.subscribe(subscription, this.redisCallbackHandler);
         }
+        this.sendTotalParticpantsHandler(subscription)
+    }
+    public async sendTotalParticpantsHandler(channelId:string){
+        try {
+            if (!this.publishClient.isOpen) {
+                await this.publishClient.connect();  
+            }
+            const liveRoom = this.liveRoomData.get(channelId)
+           if(liveRoom){
+            this.publishClient.publish(channelId, JSON.stringify({
+                type:"totalParticipants",
+                data:liveRoom[0].totalParticipants
+           }));
+        }
+        }catch (error) {
+            console.error("Error publishing to Redis:", error);
+        }
+        
     }
 
     public unsubscribe(userId: string, subscriptionId: string) {
@@ -81,11 +98,12 @@ export class SubscriptionManager {
                 console.log("unsubscribe")
                 console.log( liveRoom[0].totalParticipants)
             }
-    
+            this.sendTotalParticpantsHandler(subscriptionId)
             if (this.reverseSubscriptions.get(subscriptionId)?.length === 0) {
                 this.reverseSubscriptions.delete(subscriptionId);
                 this.redisClient.unsubscribe(subscriptionId);
             }
+          
         }
     }
 
@@ -137,11 +155,7 @@ export class SubscriptionManager {
           });
      this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
     }
-    private liveRoomDataHandler(channelId: string, message: string, userId: string) {
-        console.log("ChannelId", channelId);
-        console.log("message", message);
-        console.log("userid", userId);
-        
+    private liveRoomDataHandler(channelId: string, message: string, userId: string) {        
         const liveRoom = this.liveRoomData.get(channelId);
         if (!liveRoom) {
             return;
@@ -166,7 +180,11 @@ export class SubscriptionManager {
                 liveRoom[0].pending = liveRoom[0].pending.filter(user => user.id!== userId)
             }
         }
-
+        this.publishClient.publish(channelId, JSON.stringify({
+            type:"voting",
+            pending:liveRoom[0].voted,
+            voted:liveRoom[0].pending
+        }));
         // *Chart Logic*
        const messageX = JSON.parse(message)
        const voteByUser = messageX.vote 
@@ -192,24 +210,8 @@ export class SubscriptionManager {
             newPointVoters.push(votedParticipant!);  // Add the current user to the new point
             liveRoom[0].chartTemp.set(voteByUser, newPointVoters);
         }
-    
-        // Case 2: Vote Same (No action needed, just log)
-        console.log(`User ${userId} voted for the same point: ${voteByUser}`);
     }
 
-
-        if (liveRoom) {
-            console.log(liveRoom[0].totalParticipants);
-            console.log("VOTED--PARTICIPANTS");
-            console.log(liveRoom[0].voted);
-            console.log("PENDING--PARTICIPANTS");
-            console.log(liveRoom[0].pending);
-            console.log("ChartTemo--PARTICIPANTS");
-            console.log(liveRoom[0].chartTemp)
-            console.log("UserVotes--PARTICIPANTS");
-            console.log(liveRoom[0].userVotes)
-            
-        }
 
     }
     
