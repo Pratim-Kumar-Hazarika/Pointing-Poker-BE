@@ -120,28 +120,43 @@ const participantPayload ={
     }
   
 }
-const revealEstimatesPlayload = {
+const revealVotes = {
     "method": "SENDMESSAGE",
     "data": {
       "channelId": "room1",
       "reveal":true
     }
 }
-const restimatePayload = {
+const resetVotes = {
     "method": "SENDMESSAGE",
     "data": {
       "channelId": "room1",
-      "restimate":true
+      "reset":true
+    }
+}
+const newEstimation = {
+    "method": "SENDMESSAGE",
+    "data": {
+      "channelId": "room1",
+      "newEstimation":true
+    }
+}
+const startEstimation = {
+    "method": "SENDMESSAGE",
+    "data": {
+      "channelId": "room1",
+      "title":'Some big titlle'
     }
 }
 type User = Array<{name:string;id:string}>
 export type LiveRoomsData ={
+    title:string;
     totalParticipants:User
     voted:User
     pending:User
     chartData:Array<{point:string;voters:User}>
     userVotes :Map<string,number>; 
     chartTemp :Map<number, User> 
-
+    
 }
 

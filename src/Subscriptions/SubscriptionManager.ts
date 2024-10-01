@@ -47,7 +47,7 @@ export class SubscriptionManager {
         let liveRoom = this.liveRoomData.get(subscription);
       
         if(!liveRoom ){
-            liveRoom = [{totalParticipants: [],voted: [],pending: [],chartData: [],chartTemp:new Map(),userVotes:new Map()}];
+            liveRoom = [{title:'',totalParticipants: [],voted: [],pending: [],chartData: [],chartTemp:new Map(),userVotes:new Map()}];
             this.liveRoomData.set(subscription, liveRoom);
         }
         const userExists = liveRoom[0].totalParticipants.find(user=>user.id === userId)
@@ -114,6 +114,10 @@ export class SubscriptionManager {
             }
             // 
             const messageX = JSON.parse(message)
+            // Start Estimation/Voting
+            if(messageX.title){
+                this.startEstimation(channelId, messageX.title)
+            }
             if(messageX.vote){
                 // Engine
                 this.liveRoomDataHandler(channelId, message, userId)
@@ -125,12 +129,25 @@ export class SubscriptionManager {
             if(messageX.restimate){
                 this.restimateHandler(channelId)
             }
+            if(messageX.newEstimation){
+                this.newEstimationHandler(channelId)
+            }
           
         } catch (error) {
             console.error("Error publishing to Redis:", error);
         }
     }
-    private restimateHandler(channelId:string){
+   private startEstimation(channelId:string,title:string){
+        // **Check if moderator
+        const liveRoom = this.liveRoomData.get(channelId);
+        if(!liveRoom){
+            return;
+
+        }
+        liveRoom[0].title=title
+        this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
+}
+    private newEstimationHandler(channelId:string){
         // **Check if moderator
         const liveRoom = this.liveRoomData.get(channelId);
         if(!liveRoom){
@@ -138,6 +155,25 @@ export class SubscriptionManager {
 
         }
         liveRoom[0].chartData=[]
+        liveRoom[0].voted=[]
+        liveRoom[0].pending=[]
+        liveRoom[0].title=''
+        liveRoom[0].chartTemp = new Map()
+        liveRoom[0].userVotes = new Map()
+        this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
+}
+    private restimateHandler(channelId:string){//reset votes
+        // **Check if moderator
+        const liveRoom = this.liveRoomData.get(channelId);
+        if(!liveRoom){
+            return;
+
+        }
+        liveRoom[0].chartData=[]
+        liveRoom[0].voted=[]
+        liveRoom[0].pending=[]
+        liveRoom[0].chartTemp = new Map()
+        liveRoom[0].userVotes = new Map()
         this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
 }
     private revealVotesHandler(channelId:string){
