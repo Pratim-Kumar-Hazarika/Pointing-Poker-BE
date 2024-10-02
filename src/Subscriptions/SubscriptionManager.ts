@@ -70,7 +70,9 @@ export class SubscriptionManager {
            if(liveRoom){
             this.publishClient.publish(channelId, JSON.stringify({
                 type:"totalParticipants",
-                data:liveRoom[0].totalParticipants
+                data:{
+                    total:liveRoom[0].totalParticipants
+                }
            }));
         }
         }catch (error) {
@@ -250,8 +252,10 @@ export class SubscriptionManager {
         }
         this.publishClient.publish(channelId, JSON.stringify({
             type:"voting",
-            voted:liveRoom[0].voted,
-            pending:liveRoom[0].pending
+            data:{
+                voted:liveRoom[0].voted,
+                pending:liveRoom[0].pending
+           }
         }));
         // *Chart Logic*
        const messageX = JSON.parse(message)
