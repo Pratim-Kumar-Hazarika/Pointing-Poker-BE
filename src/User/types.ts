@@ -161,3 +161,11 @@ export type LiveRoomsData ={
     
 }
 
+
+const startEstimationX = {
+    "method": "SENDMESSAGE",
+    "data": {
+      "channelId": "room1",
+      "action":"reset" || "reveal"||"start"||"end"
+    }
+}

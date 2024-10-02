@@ -156,8 +156,6 @@ export class SubscriptionManager {
             type:"startEstimation",
             data:{
                 title:liveRoom[0].title,
-                voted:liveRoom[0].voted,
-                pending:liveRoom[0].pending
             }
         }))
 }
