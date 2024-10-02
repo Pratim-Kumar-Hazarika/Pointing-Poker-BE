@@ -13,7 +13,8 @@ export type OutgoingMessage = {
 
 export type SubscribeMessage = {
     method: MESSAGE_TYPES.SUBSCRIBE,
-    params: string[] /// roomId
+    params: string[] /// roomId,    
+    username:string
 }
 
 export type UnsubscribeMessage = {

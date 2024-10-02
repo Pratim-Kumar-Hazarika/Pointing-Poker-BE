@@ -35,7 +35,7 @@ export class SubscriptionManager {
         return this.instance;
     }
 
-    public subscribe(userId: string, subscription: string) {
+    public subscribe(userId: string, subscription: string,username:string) {
         if (this.subscriptions.get(userId)?.includes(subscription)) {
             return;
         }
@@ -53,7 +53,7 @@ export class SubscriptionManager {
         const userExists = liveRoom[0].totalParticipants.find(user=>user.id === userId)
         if(!userExists){
             // Add user to live room
-            liveRoom[0].totalParticipants.push({name: `Pratim-${userId}`, id: userId})
+            liveRoom[0].totalParticipants.push({name: username, id: userId})
 
         }
         if (this.reverseSubscriptions.get(subscription)?.length === 1) {
@@ -126,7 +126,7 @@ export class SubscriptionManager {
             if(messageX.reveal){
                 this.revealVotesHandler(channelId)
             }
-            if(messageX.restimate){
+            if(messageX.restimate){///reset
                 this.restimateHandler(channelId)
             }
             if(messageX.newEstimation){
@@ -145,7 +145,19 @@ export class SubscriptionManager {
 
         }
         liveRoom[0].title=title
-        this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
+        liveRoom[0].chartData=[]
+        liveRoom[0].voted=[]
+        liveRoom[0].pending=[]
+        liveRoom[0].chartTemp = new Map()
+        liveRoom[0].userVotes = new Map()
+        this.publishClient.publish(channelId, JSON.stringify({
+            type:"startEstimation",
+            data:{
+                title:liveRoom[0].title,
+                voted:liveRoom[0].voted,
+                pending:liveRoom[0].pending
+            }
+        }))
 }
     private newEstimationHandler(channelId:string){
         // **Check if moderator
@@ -160,7 +172,15 @@ export class SubscriptionManager {
         liveRoom[0].title=''
         liveRoom[0].chartTemp = new Map()
         liveRoom[0].userVotes = new Map()
-        this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
+        this.publishClient.publish(channelId, JSON.stringify({
+            type:"newEstimation",
+            data:{
+                title:liveRoom[0].title,
+                voted:liveRoom[0].voted,
+                pending:liveRoom[0].pending
+            }
+        }))
+       
 }
     private restimateHandler(channelId:string){//reset votes
         // **Check if moderator
@@ -174,7 +194,13 @@ export class SubscriptionManager {
         liveRoom[0].pending=[]
         liveRoom[0].chartTemp = new Map()
         liveRoom[0].userVotes = new Map()
-        this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
+        this.publishClient.publish(channelId, JSON.stringify({
+            type:"resetVotes",
+            data:{
+                voted:liveRoom[0].voted,
+                pending:liveRoom[0].pending
+            }
+        }))
 }
     private revealVotesHandler(channelId:string){
         // **Check if moderator
@@ -189,7 +215,13 @@ export class SubscriptionManager {
               voters: voters 
             });
           });
-     this.publishClient.publish(channelId, JSON.stringify(liveRoom[0].chartData));
+     this.publishClient.publish(channelId, JSON.stringify({
+        type:"revealVotes",
+        data:{
+            chartData: liveRoom[0].chartData,
+            title: liveRoom[0].title
+        }
+     }));
     }
     private liveRoomDataHandler(channelId: string, message: string, userId: string) {        
         const liveRoom = this.liveRoomData.get(channelId);
@@ -218,8 +250,8 @@ export class SubscriptionManager {
         }
         this.publishClient.publish(channelId, JSON.stringify({
             type:"voting",
-            pending:liveRoom[0].voted,
-            voted:liveRoom[0].pending
+            voted:liveRoom[0].voted,
+            pending:liveRoom[0].pending
         }));
         // *Chart Logic*
        const messageX = JSON.parse(message)
