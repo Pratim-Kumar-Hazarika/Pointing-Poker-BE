@@ -218,7 +218,7 @@ export class SubscriptionManager {
      this.publishClient.publish(channelId, JSON.stringify({
         type:"revealVotes",
         data:{
-            chartData: liveRoom[0].chartData,
+            chartData: liveRoom[0].chartData.filter(item => item.voters.length >= 1),
             title: liveRoom[0].title
         }
      }));
