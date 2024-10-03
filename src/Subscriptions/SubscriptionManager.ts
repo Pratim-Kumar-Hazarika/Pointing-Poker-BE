@@ -128,7 +128,7 @@ export class SubscriptionManager {
             if(messageX.reveal){
                 this.revealVotesHandler(channelId)
             }
-            if(messageX.restimate){///reset
+            if(messageX.reset){///reset
                 this.restimateHandler(channelId)
             }
             if(messageX.newEstimation){
