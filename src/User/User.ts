@@ -23,7 +23,6 @@ export class User{
     }
 
     emit(message:any){
-        console.log("messageEMit",message)
         this.ws.send(message);
     }
 
@@ -32,7 +31,7 @@ export class User{
             const parsedMessage:IncomingMessage = JSON.parse(message);
             if(parsedMessage.method ===MESSAGE_TYPES.SUBSCRIBE ){
 
-                parsedMessage.params.forEach(s=>SubscriptionManager.getInstance().subscribe(this.id, s,parsedMessage.username));
+                parsedMessage.params.forEach(s=>SubscriptionManager.getInstance().subscribe(this.id, s,parsedMessage.username, parsedMessage.moderatorId));
             }
 
             if(parsedMessage.method === MESSAGE_TYPES.UNSUBSCRIBE){

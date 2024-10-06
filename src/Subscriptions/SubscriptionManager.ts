@@ -35,7 +35,7 @@ export class SubscriptionManager {
         return this.instance;
     }
 
-    public subscribe(userId: string, subscription: string,username:string) {
+    public subscribe(userId: string, subscription: string,username:string,moderatorId:string|null) {
         if (this.subscriptions.get(userId)?.includes(subscription)) {
             return;
         }
@@ -47,7 +47,7 @@ export class SubscriptionManager {
         let liveRoom = this.liveRoomData.get(subscription);
       
         if(!liveRoom ){
-            liveRoom = [{title:'',totalParticipants: [],voted: [],pending: [],chartData: [],chartTemp:new Map(),userVotes:new Map()}];
+            liveRoom = [{title:'',moderatorId: moderatorId,time:new Date(),totalParticipants: [],voted: [],pending: [],chartData: [],chartTemp:new Map(),userVotes:new Map()}];
             this.liveRoomData.set(subscription, liveRoom);
         }
         const userExists = liveRoom[0].totalParticipants.find(user=>user.id === userId)
@@ -59,8 +59,17 @@ export class SubscriptionManager {
         if (this.reverseSubscriptions.get(subscription)?.length === 1) {
             this.redisClient.subscribe(subscription, this.redisCallbackHandler);
         }
+        console.log("==>>>",{liveRoom})
+        ///If live room is true && Some estimation is going on
+        // ..... Send the estimation to the current user who subscribed
+        if(liveRoom[0].title){
+            this.sendOnGoingEstimation(userId,subscription)
+        }
+
         this.sendTotalParticpantsHandler(subscription)
     }
+
+    
     public async sendTotalParticpantsHandler(channelId:string){
         try {
             if (!this.publishClient.isOpen) {
@@ -116,6 +125,7 @@ export class SubscriptionManager {
             }
             // 
             const messageX = JSON.parse(message)
+            console.log("+messageXXXXXXXXX,,,,,+++",messageX)
             // Start Estimation/Voting
             if(messageX.title){
                 this.startEstimation(channelId, messageX.title)
@@ -134,9 +144,54 @@ export class SubscriptionManager {
             if(messageX.newEstimation){
                 this.newEstimationHandler(channelId)
             }
+            if(messageX.reconnect){
+                this.reconnectHandler(channelId,userId, messageX.moderatorId)
+            }
           
         } catch (error) {
             console.error("Error publishing to Redis:", error);
+        }
+    }
+
+
+    private sendOnGoingEstimation(userId:string,channelId:string){
+        let liveRoom = this.liveRoomData.get(channelId);
+        if(liveRoom){
+            if(liveRoom[0].title){
+            UserManager.getInstance().getUser(userId)?.emit(JSON.stringify({
+                type:"onGoingEstimation",
+                data:{
+                    title:liveRoom[0].title,
+                    time:liveRoom[0].time,
+                    chartData: liveRoom[0].chartData.filter(item => item.voters.length >= 1),
+                    voted:liveRoom[0].voted,
+                    pending:liveRoom[0].pending
+                }
+            }))
+        }
+        } 
+    }
+    private reconnectHandler(channel:string,userId:string,moderatorId:string|null){
+        const liveRoom = this.liveRoomData.get(channel);
+        if(!liveRoom){
+            UserManager.getInstance().getUser(userId)?.emit(JSON.stringify({
+                type:"reconnect",
+                data:{
+                    active:false,
+                    isModerator:false
+                }
+            }))
+        }else{
+            if(liveRoom[0].totalParticipants.length >=1){
+                const isModerator = moderatorId ? liveRoom[0].moderatorId === moderatorId : false
+                UserManager.getInstance().getUser(userId)?.emit(JSON.stringify({
+                    type:"reconnect",
+                    data:{
+                        active:true,
+                        isModerator: isModerator
+                    }
+                }))
+            }
         }
     }
    private startEstimation(channelId:string,title:string){
@@ -147,6 +202,7 @@ export class SubscriptionManager {
 
         }
         liveRoom[0].title=title
+        liveRoom[0].time = new Date()
         liveRoom[0].chartData=[]
         liveRoom[0].voted=[]
         liveRoom[0].pending=[]

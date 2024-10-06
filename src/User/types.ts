@@ -14,7 +14,8 @@ export type OutgoingMessage = {
 export type SubscribeMessage = {
     method: MESSAGE_TYPES.SUBSCRIBE,
     params: string[] /// roomId,    
-    username:string
+    username:string;
+    moderatorId:string | null;
 }
 
 export type UnsubscribeMessage = {
@@ -113,6 +114,7 @@ type ParticipantPayload = {
 }
 
 
+
 const participantPayload ={
     "method": "SENDMESSAGE",
     "data": {
@@ -152,6 +154,8 @@ const startEstimation = {
 type User = Array<{name:string;id:string}>
 export type LiveRoomsData ={
     title:string;
+    moderatorId:string | null;
+    time:Date
     totalParticipants:User
     voted:User
     pending:User
@@ -167,5 +171,13 @@ const startEstimationX = {
     "data": {
       "channelId": "room1",
       "action":"reset" || "reveal"||"start"||"end"
+    }
+}
+
+const moderatorLeftPayload = {
+    "method":"SENDMESSAGE",
+    "data": {
+        "channelId":"room1",
+        "reconnect":true
     }
 }
