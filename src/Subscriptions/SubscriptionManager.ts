@@ -106,9 +106,15 @@ export class SubscriptionManager {
                 liveRoom[0].totalParticipants = liveRoom[0].totalParticipants.filter(participant => participant.id !== userId); 
             }
             if(liveRoom){
-                console.log("unsubscribe")
+                if(liveRoom[0].totalParticipants.length ===0){
+                    if (this.liveRoomData.has(subscriptionId)) {
+                        this.liveRoomData.delete(subscriptionId);
+                        console.log(`Room with ID ${subscriptionId} removed from liveRoomData due to 0 participants.`);
+                      }
+                }
                 console.log( liveRoom[0].totalParticipants)
             }
+           
             this.sendTotalParticpantsHandler(subscriptionId)
             if (this.reverseSubscriptions.get(subscriptionId)?.length === 0) {
                 this.reverseSubscriptions.delete(subscriptionId);
