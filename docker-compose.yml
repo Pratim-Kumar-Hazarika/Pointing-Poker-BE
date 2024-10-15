@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  estimate-be:
+    image: beyondhuman6969/estimate 
+    ports:
+      - '8080:8080'  
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+    networks:
+      - estimate-network
+
+  redis:
+    image: redis:alpine
+    ports:
+      - '6379:6379'
+    networks:
+      - estimate-network
+
+networks:
+  estimate-network:

@@ -22,8 +22,10 @@ export class UserManager {
     }
 
     public addUser(ws:WebSocket){
+        console.log("Calleddd---->>>")
         const id = this.getRandomId();
         const user = new User(id,ws);
+        console.log("USER",user)
         this.users.set(id,user)
         this.registerOnClose(ws,id)
         return user;
@@ -32,6 +34,7 @@ export class UserManager {
     private registerOnClose(ws:WebSocket,id:string){
             ws.on("close",()=>{
                 this.users.delete(id)
+                console.log("Onclose--<<")
                 SubscriptionManager.getInstance().userLeft(id)
             })
         

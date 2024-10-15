@@ -12,8 +12,13 @@ export class SubscriptionManager {
     private liveRoomData:Map<string,LiveRoomsData[]> = new Map();
 
     private constructor() {
-        this.redisClient = createClient();
-        this.publishClient = createClient();
+        this.redisClient = createClient({
+            url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+        });
+        
+        this.publishClient = createClient({
+            url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+        });
         // Connect both clients with async/await to ensure connection
         this.connectClients();
     }
@@ -26,19 +31,51 @@ export class SubscriptionManager {
         } catch (error) {
             console.error("Error connecting to Redis:", error);
         }
+
+        console.log("Redis-->>", `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`)
     }
 
     public static getInstance() {
         if (!this.instance) {
             this.instance = new SubscriptionManager();
+            console.log("SubscriptionManager instance")
         }
         return this.instance;
     }
 
     public subscribe(userId: string, subscription: string,username:string,moderatorId:string|null) {
+       
+
         if (this.subscriptions.get(userId)?.includes(subscription)) {
             return;
         }
+        if(moderatorId === null){
+            ///Avoid random rooms joining
+            let liveRoom = this.liveRoomData.get(subscription);
+            if(!liveRoom){
+                UserManager.getInstance().getUser(userId)?.emit(JSON.stringify({
+                    type:"noActiveRooms",
+                    data:{
+                        rooms:null,
+                        message:`Hey 👋, the room code is invalid. Please enter a valid room code.`,
+                        
+                    }
+                }))
+                return;
+            }else{
+                UserManager.getInstance().getUser(userId)?.emit(JSON.stringify({
+                    type:"noActiveRooms",
+                    data:{
+                        rooms:true,
+                        message:`Hey 👋, the room code is invalid. Please enter a valid room code.`,
+                        roomCode:subscription
+                    }
+                }))
+            }
+         
+        }
+        ///moderatorId === null ? user  : room creator
+        ///Check if room is created already if not
 
 
         this.subscriptions.set(userId, (this.subscriptions.get(userId) || []).concat(subscription));
