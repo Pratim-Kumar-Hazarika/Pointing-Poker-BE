@@ -2,7 +2,7 @@ import { WebSocketServer } from "ws";
 import { UserManager } from "./User/UserManager";
 
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: 5000 });
 
 wss.on("connection", (ws,request) => {
     const origin = request.headers.origin;
