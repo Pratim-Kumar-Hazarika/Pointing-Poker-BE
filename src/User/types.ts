@@ -1,7 +1,8 @@
 export enum MESSAGE_TYPES {
     SEND_MESSAGE= "SENDMESSAGE",
     SUBSCRIBE ="SUBSCRIBE",
-    UNSUBSCRIBE= "UNSUBSCRIBE"
+    UNSUBSCRIBE= "UNSUBSCRIBE",
+    HEART ="HEART"
 }
 export type OutgoingMessage = {
     method:MESSAGE_TYPES.SEND_MESSAGE,
@@ -23,7 +24,10 @@ export type UnsubscribeMessage = {
     params: string[]/// roomId
 }
 
-export type IncomingMessage = SubscribeMessage | UnsubscribeMessage | OutgoingMessage;
+export type AliveMessage = {
+    method: MESSAGE_TYPES.HEART,
+}
+export type IncomingMessage = SubscribeMessage | UnsubscribeMessage | OutgoingMessage | AliveMessage;
 
 
 // Structure
