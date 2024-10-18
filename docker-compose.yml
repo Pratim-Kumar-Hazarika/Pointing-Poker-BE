@@ -2,9 +2,10 @@ version: '3'
 
 services:
   estimate-be:
-    image: beyondhuman6969/estimate 
+    # image: .
+    build: .
     ports:
-      - '8080:8080'  
+      - '5001:5001'  
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
