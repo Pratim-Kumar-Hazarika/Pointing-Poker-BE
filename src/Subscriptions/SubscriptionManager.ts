@@ -314,6 +314,8 @@ export class SubscriptionManager {
               voters: voters 
             });
           });
+    // Sort chartData by point in ascending order
+    liveRoom[0].chartData.sort((a, b) => parseInt(a.point) - parseInt(b.point));
      this.publishClient.publish(channelId, JSON.stringify({
         type:"revealVotes",
         data:{
