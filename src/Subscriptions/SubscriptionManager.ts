@@ -116,24 +116,18 @@ export class SubscriptionManager {
             }
             const liveRoom = this.liveRoomData.get(channelId)
            if(liveRoom){
-            if(type ==="subscribe"){
-            this.publishClient.publish(channelId, JSON.stringify({
-                type:"totalParticipants",
-                data:{
-                    total:liveRoom[0].totalParticipants
-                }
-           }));
-        }else{
+            liveRoom[0].voted.filter((x)=>x.id !== userId)
+            liveRoom[0].pending.filter((x)=>x.id !== userId)
             this.publishClient.publish(channelId, JSON.stringify({
                 type:"totalParticipants",
                 data:{
                     total:liveRoom[0].totalParticipants,
-                    voted:liveRoom[0].voted.filter((x)=>x.id !== userId),
-                    pending:liveRoom[0].pending.filter((x)=>x.id !== userId)
+                    voted:liveRoom[0].voted,
+                    pending:liveRoom[0].pending
                 }
            }));
         }
-        }
+        
         }catch (error) {
             console.error("Error publishing to Redis:", error);
         }
