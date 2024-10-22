@@ -116,8 +116,8 @@ export class SubscriptionManager {
             }
             const liveRoom = this.liveRoomData.get(channelId)
            if(liveRoom){
-            liveRoom[0].voted.filter((x)=>x.id !== userId)
-            liveRoom[0].pending.filter((x)=>x.id !== userId)
+            liveRoom[0].voted = liveRoom[0].voted.filter((x)=>x.id !== userId)
+            liveRoom[0].pending= liveRoom[0].pending.filter((x)=>x.id !== userId)
             this.publishClient.publish(channelId, JSON.stringify({
                 type:"totalParticipants",
                 data:{

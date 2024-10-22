@@ -39,7 +39,6 @@ export class UserManager {
             })
         
     }
-
     public getUser(id:string){
         return this.users.get(id)
     }
