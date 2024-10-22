@@ -103,23 +103,36 @@ export class SubscriptionManager {
             this.sendOnGoingEstimation(userId,subscription)
         }
 
-        this.sendTotalParticpantsHandler(subscription)
+        this.sendTotalParticpantsHandler(subscription,userId,"subscribe")
     }
 
     
-    public async sendTotalParticpantsHandler(channelId:string){
+ 
+
+    public async sendTotalParticpantsHandler(channelId:string,userId:string,type:"subscribe"|"unsubscribe"){
         try {
             if (!this.publishClient.isOpen) {
                 await this.publishClient.connect();  
             }
             const liveRoom = this.liveRoomData.get(channelId)
            if(liveRoom){
+            if(type ==="subscribe"){
             this.publishClient.publish(channelId, JSON.stringify({
                 type:"totalParticipants",
                 data:{
                     total:liveRoom[0].totalParticipants
                 }
            }));
+        }else{
+            this.publishClient.publish(channelId, JSON.stringify({
+                type:"totalParticipants",
+                data:{
+                    total:liveRoom[0].totalParticipants,
+                    voted:liveRoom[0].voted.filter((x)=>x.id !== userId),
+                    pending:liveRoom[0].pending.filter((x)=>x.id !== userId)
+                }
+           }));
+        }
         }
         }catch (error) {
             console.error("Error publishing to Redis:", error);
@@ -152,7 +165,8 @@ export class SubscriptionManager {
                 console.log( liveRoom[0].totalParticipants)
             }
            
-            this.sendTotalParticpantsHandler(subscriptionId)
+            ///Remove voted/not-voted
+            this.sendTotalParticpantsHandler(subscriptionId,userId,"unsubscribe")
             if (this.reverseSubscriptions.get(subscriptionId)?.length === 0) {
                 this.reverseSubscriptions.delete(subscriptionId);
                 this.redisClient.unsubscribe(subscriptionId);
