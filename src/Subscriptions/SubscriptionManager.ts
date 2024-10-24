@@ -404,4 +404,21 @@ export class SubscriptionManager {
     public userLeft(userId: string) {
         this.subscriptions.get(userId)?.forEach(s => this.unsubscribe(userId, s));
     }
+
+    public sendLiveData(){
+       const ongoingSessions = this.liveRoomData.size;
+       let totalPlayers = 0;
+       this.liveRoomData.forEach((rooms: LiveRoomsData[]) => {
+        rooms.forEach((room: LiveRoomsData) => {
+            totalPlayers += room.totalParticipants.length; 
+        });
+      });
+      return JSON.stringify({
+        type:"liveData",
+        data:{
+            ongoingSessions:ongoingSessions,
+            totalPlayers:totalPlayers
+        }
+      })
+    }
 }
