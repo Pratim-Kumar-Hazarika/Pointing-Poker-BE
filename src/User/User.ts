@@ -30,6 +30,7 @@ export class User{
     private addEventListener(){
         this.ws.on('message', (message:string) =>{
             const parsedMessage:IncomingMessage = JSON.parse(message);
+            console.log("Parsed Message",parsedMessage)
             if(parsedMessage.method ===MESSAGE_TYPES.SUBSCRIBE ){
 
                 parsedMessage.params.forEach(s=>SubscriptionManager.getInstance().subscribe(this.id, s,parsedMessage.username, parsedMessage.moderatorId));
