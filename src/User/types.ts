@@ -1,3 +1,5 @@
+import { WebSocket } from "ws";
+
 export enum MESSAGE_TYPES {
     SEND_MESSAGE= "SENDMESSAGE",
     SUBSCRIBE ="SUBSCRIBE",
@@ -185,3 +187,9 @@ const moderatorLeftPayload = {
         "reconnect":true
     }
 }
+
+export type IsAlive = {
+    isAlive: boolean;
+  };
+  
+  export interface AliveWebSocket extends WebSocket, IsAlive {}
