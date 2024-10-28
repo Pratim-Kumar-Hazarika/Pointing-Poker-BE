@@ -3,6 +3,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import { UserManager } from "./User/UserManager";
 import { SubscriptionManager } from "./Subscriptions/SubscriptionManager";
 import { AliveWebSocket } from "./User/types";
+import { KafkaManager } from "./Kafka/KafkaManager";
 
 const PORT = Number(process.env.WS_PORT ) || 5000;
 const wss = new WebSocketServer({ port: PORT });
@@ -32,7 +33,7 @@ wss.on("connection", (ws, request) => {
   aliveWs.on("ping", () => {
     console.log("PING received from client");
   });
-
+  KafkaManager.getInstance().sendMessage("user_joined","Hey user joined")
   UserManager.getInstance().addUser(aliveWs);
 
   //Send live data
