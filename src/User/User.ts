@@ -2,6 +2,7 @@ import { WebSocket } from "ws";
 import { IncomingMessage, MESSAGE_TYPES, OutgoingMessage } from './types'
 import { SubscriptionManager } from "../Subscriptions/SubscriptionManager";
 import { UserManager } from "./UserManager";
+import { KafkaManager } from "../Kafka/KafkaManager";
 
 export class User{
     private id:string;
@@ -30,16 +31,21 @@ export class User{
     private addEventListener(){
         this.ws.on('message', (message:string) =>{
             const parsedMessage:IncomingMessage = JSON.parse(message);
-            console.log("Parsed Message",parsedMessage)
             if(parsedMessage.method ===MESSAGE_TYPES.SUBSCRIBE ){
-
                 parsedMessage.params.forEach(s=>SubscriptionManager.getInstance().subscribe(this.id, s,parsedMessage.username, parsedMessage.moderatorId));
+                if(parsedMessage.moderatorId){
+                KafkaManager.getInstance().sendMessage("Increment_Sessions",JSON.stringify({
+                        initial:false,
+                })) 
+                }
+                KafkaManager.getInstance().sendMessage("Increment_Users",JSON.stringify({
+                    initial:false,
+                }))
             }
              if(parsedMessage.method === MESSAGE_TYPES.UNSUBSCRIBE){
                 parsedMessage.params.forEach(s=>SubscriptionManager.getInstance().unsubscribe(this.id,s));
             }
             if(parsedMessage.method === MESSAGE_TYPES.SEND_MESSAGE){
-
                 SubscriptionManager.getInstance().redisPublishHandler(parsedMessage.data.channelId,JSON.stringify(parsedMessage.data),this.id) 
             }
 
