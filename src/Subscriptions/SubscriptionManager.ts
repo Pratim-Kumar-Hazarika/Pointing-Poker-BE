@@ -1,6 +1,7 @@
 import { RedisClientType, createClient } from "redis";
 import { UserManager } from "../User/UserManager";
 import { LiveRoomsData } from "../User/types";
+import { KafkaManager } from "../Kafka/KafkaManager";
 
 export class SubscriptionManager {
     private static instance: SubscriptionManager;
@@ -184,6 +185,9 @@ export class SubscriptionManager {
             if(messageX.vote){
                 // Engine
                 this.liveRoomDataHandler(channelId, message, userId)
+                KafkaManager.getInstance().sendMessage("Increment_Votes",JSON.stringify({
+                    initial:false,
+                }))
             }
             // Check if moderator
             if(messageX.reveal){
