@@ -13,14 +13,13 @@ function heartbeat(this: AliveWebSocket) {
   this.isAlive = true;
 }
 
-
 wss.on("connection", (ws, request) => {
   const origin = request.headers.origin;
 
-//   if (origin !== 'https://estimatee.vercel.app') {
-//     ws.close(1008, 'Forbidden: Invalid Origin');
-//     return;
-// }
+  if (origin !== 'https://estimatee.vercel.app') {
+    ws.close(1008, 'Forbidden: Invalid Origin');
+    return;
+}
 
   const aliveWs = ws as AliveWebSocket;
   // Mark the WebSocket as alive when the connection is established
