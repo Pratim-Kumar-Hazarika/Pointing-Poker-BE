@@ -4,6 +4,7 @@ import { UserManager } from "./User/UserManager";
 import { SubscriptionManager } from "./Subscriptions/SubscriptionManager";
 import { AliveWebSocket } from "./User/types";
 import { KafkaManager } from "./Kafka/KafkaManager";
+import { getPgVersion } from "./Db/Db";
 
 const PORT = Number(process.env.WS_PORT ) || 5000;
 const wss = new WebSocketServer({ port: PORT });
@@ -12,13 +13,14 @@ function heartbeat(this: AliveWebSocket) {
   this.isAlive = true;
 }
 
+
 wss.on("connection", (ws, request) => {
   const origin = request.headers.origin;
 
-  if (origin !== 'https://estimatee.vercel.app') {
-    ws.close(1008, 'Forbidden: Invalid Origin');
-    return;
-}
+//   if (origin !== 'https://estimatee.vercel.app') {
+//     ws.close(1008, 'Forbidden: Invalid Origin');
+//     return;
+// }
 
   const aliveWs = ws as AliveWebSocket;
   // Mark the WebSocket as alive when the connection is established
@@ -33,9 +35,8 @@ wss.on("connection", (ws, request) => {
   aliveWs.on("ping", () => {
     console.log("PING received from client");
   });
-  KafkaManager.getInstance().sendMessage("user_joined","Hey user joined")
+ 
   UserManager.getInstance().addUser(aliveWs);
-
   //Send live data
   const liveData = SubscriptionManager.getInstance().sendLiveData()
   ws.send(liveData)
@@ -58,6 +59,11 @@ const interval = setInterval(function ping() {
   });
 }, 5000);
 
+
+//Call Kafka
+KafkaManager.getInstance()
+//Call Db
+getPgVersion();
 
 // Clear interval on server close
 wss.on('close', function close() {
