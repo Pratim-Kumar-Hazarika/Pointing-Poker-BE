@@ -34,3 +34,26 @@ export async function incrementSessions() {
     client.release();
   }
 }
+
+export async function getTotalCounts() {
+  const client = await pool.connect();
+  try {
+    const usersResult = await client.query('SELECT count(id) AS total FROM total_users');
+    const votesResult = await client.query('SELECT count(id) AS total FROM total_votes');
+    const sessionsResult = await client.query('SELECT count(id) AS total FROM total_sessions');
+
+    const totalUsers = usersResult.rows[0].total || 0;
+    const totalVotes = votesResult.rows[0].total || 0;
+    const totalSessions = sessionsResult.rows[0].total || 0;
+    return {
+      totalUsers :totalUsers,
+      totalVotes:totalVotes,
+      totalSessions:totalSessions,
+    };
+  } catch (error) {
+    console.error("Error fetching total counts:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
