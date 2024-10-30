@@ -4,7 +4,8 @@ services:
   estimate-be:
     build: .
     ports:
-      - "5001:5001"
+      - "5001:5001"  # WebSocket server port
+      - "5003:5003"  # HTTP server port
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
