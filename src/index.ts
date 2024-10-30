@@ -1,28 +1,45 @@
 require('dotenv').config();
+import express from 'express';
 import { WebSocket, WebSocketServer } from "ws";
 import { UserManager } from "./User/UserManager";
 import { SubscriptionManager } from "./Subscriptions/SubscriptionManager";
 import { AliveWebSocket } from "./User/types";
 import { KafkaManager } from "./Kafka/KafkaManager";
 import { getPgVersion } from "./Db/Db";
+import { heartbeat } from './utils/ws';
+import { getTotalCounts } from './postgress/queries';
 
-const PORT = Number(process.env.WS_PORT ) || 5000;
-const wss = new WebSocketServer({ port: PORT });
 
-function heartbeat(this: AliveWebSocket) {
-  this.isAlive = true;
-}
+const WS_PORT = 5001;
+const HTTP_PORT =5003
+const app = express();
+const wss = new WebSocketServer({ port: WS_PORT });
+
+app.get('/', async (req, res) => {
+  try {
+    const data = await getTotalCounts()
+    res.json({
+    status:200,
+    data:data
+  })
+  } catch (error) {
+    res.json({
+      status:400,
+      error:'error'
+    })
+  }
+});
+
 
 wss.on("connection", (ws, request) => {
   const origin = request.headers.origin;
 
-  if (origin !== 'https://estimatee.vercel.app') {
-    ws.close(1008, 'Forbidden: Invalid Origin');
-    return;
-}
+//   if (origin !== 'https://estimatee.vercel.app') {
+//     ws.close(1008, 'Forbidden: Invalid Origin');
+//     return;
+// }
 
   const aliveWs = ws as AliveWebSocket;
-  // Mark the WebSocket as alive when the connection is established
   aliveWs.isAlive = true;
 
   // When the server receives a pong, call the heartbeat function
@@ -32,7 +49,7 @@ wss.on("connection", (ws, request) => {
   });
 
   aliveWs.on("ping", () => {
-    console.log("PING received from client");
+    // console.log("PING received from client");
   });
  
   UserManager.getInstance().addUser(aliveWs);
@@ -43,8 +60,8 @@ wss.on("connection", (ws, request) => {
 
 // Ping clients  every 5 seconds to check if they are still alive
 const interval = setInterval(function ping() {
-  console.log("Sending PING to clients");
-  console.log("Wsss.clients",wss.clients.size)
+  // console.log("Sending PING to clients");
+  // console.log("Wsss.clients",wss.clients.size)
 
   wss.clients.forEach(function each(ws: WebSocket) {
     const aliveWs = ws as AliveWebSocket;
@@ -59,9 +76,9 @@ const interval = setInterval(function ping() {
 }, 5000);
 
 
-//Call Kafka
+//Initialize Kafka
 KafkaManager.getInstance()
-//Call Db
+//Initialize Kafka
 getPgVersion();
 
 // Clear interval on server close
@@ -69,4 +86,8 @@ wss.on('close', function close() {
   clearInterval(interval);
 });
 
-console.log(`WebSocket server started on port ${PORT} 🚀`);
+// Start HTTP server
+app.listen(HTTP_PORT, () => {
+  console.log(`HTTP server started on port ${HTTP_PORT} 🚀`);
+});
+console.log(`WebSocket server started on port ${WS_PORT} 🚀`);
