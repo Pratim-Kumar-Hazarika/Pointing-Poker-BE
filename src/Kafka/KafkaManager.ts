@@ -15,7 +15,7 @@ export class KafkaManager {
   private constructor() {
     this.kafka = new Kafka({
       clientId: "my-app",
-      brokers: ["localhost:9092"],
+      brokers: [process.env.KAFKA_BOOTSTRAP_SERVERS ||'localhost:9092'],
     });
     this.producer = this.kafka.producer();
   }
@@ -23,7 +23,7 @@ export class KafkaManager {
   public static getInstance(): KafkaManager {
     if (!this.instance) {
       this.instance = new KafkaManager();
-      console.log("1. KafkaManager instance created");
+      console.log("1. KafkaManager instance created ✅");
     }
     return this.instance;
   }
@@ -33,7 +33,7 @@ export class KafkaManager {
     if (!this.isProducerConnected) {
       await this.producer.connect();
       this.isProducerConnected = true;
-      console.log("2. Kafka producer connected");
+      console.log("2. Kafka producer connected 🚀✨");
     }
   }
 
@@ -101,16 +101,15 @@ class KafkaApp {
     await this.kafkaManager.addConsumer("Increment_Users_Group", "Increment_Users", async (message) => {
       const data:KafkaMessage  =  JSON.parse(message)
       if(data?.initial===true ){
-        console.log("Increment_Users consumer starting...")
+        console.log("Increment_Users consumer starting.. 🚀")
         return
       }
       await incrementUsers();
     });
     await this.kafkaManager.addConsumer("Increment_Votes_Group", "Increment_Votes", async (message) => {
       const data:KafkaMessage  =  JSON.parse(message)
-      console.log("data",data)
       if(data?.initial===true ){
-        console.log("Increment_Votes consumer starting...")
+        console.log("Increment_Votes consumer starting... 🚀")
         return
       }
       await incrementVotes();
@@ -118,7 +117,7 @@ class KafkaApp {
     await this.kafkaManager.addConsumer("Increment_Sessions_Group", "Increment_Sessions", async (message) => {
       const data:KafkaMessage  =  JSON.parse(message)
       if(data?.initial===true ){
-        console.log("Increment_Sessions consumer starting...")
+        console.log("Increment_Sessions consumer starting...🚀")
         return
       }
       await incrementSessions();
