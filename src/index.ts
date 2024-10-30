@@ -16,6 +16,13 @@ const app = express();
 const wss = new WebSocketServer({ port: WS_PORT });
 
 app.get('/', async (req, res) => {
+  const origin = req.headers.origin;
+   if (origin !== 'https://estimatee.vercel.app') {
+    res.json({
+      message: "Hire me 🚀. My website: <a href='https://prratim.com' target='_blank'>prratim.com</a>. My Email: <a href='mailto:prratimhazarika@gmail.com'>prratimhazarika@gmail.com</a>"
+    });
+    return;
+  }
   try {
     const data = await getTotalCounts()
     res.json({
@@ -34,10 +41,10 @@ app.get('/', async (req, res) => {
 wss.on("connection", (ws, request) => {
   const origin = request.headers.origin;
 
-//   if (origin !== 'https://estimatee.vercel.app') {
-//     ws.close(1008, 'Forbidden: Invalid Origin');
-//     return;
-// }
+  if (origin !== 'https://estimatee.vercel.app') {
+    ws.close(1008, 'Forbidden: Invalid Origin');
+    return;
+}
 
   const aliveWs = ws as AliveWebSocket;
   aliveWs.isAlive = true;
@@ -60,9 +67,6 @@ wss.on("connection", (ws, request) => {
 
 // Ping clients  every 5 seconds to check if they are still alive
 const interval = setInterval(function ping() {
-  // console.log("Sending PING to clients");
-  // console.log("Wsss.clients",wss.clients.size)
-
   wss.clients.forEach(function each(ws: WebSocket) {
     const aliveWs = ws as AliveWebSocket;
     
