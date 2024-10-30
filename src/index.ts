@@ -51,7 +51,6 @@ wss.on("connection", (ws, request) => {
 
   // When the server receives a pong, call the heartbeat function
   aliveWs.on('pong', function() {
-    console.log("Received PONG from client");
     heartbeat.call(aliveWs); // Call heartbeat to mark the connection as alive
   });
 
