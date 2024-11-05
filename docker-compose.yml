@@ -3,8 +3,9 @@ version: '3'
 services:
   estimate-be:
     build: .
+    # image: beyondhuman6969/estimate:1.8
     ports:
-      - "5001:5001"  # WebSocket server port
+      - "5000:5000"  # WebSocket server port
       - "5003:5003"  # HTTP server port
     environment:
       REDIS_HOST: redis

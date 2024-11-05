@@ -10,7 +10,7 @@ import { heartbeat } from './utils/ws';
 import { getTotalCounts } from './postgress/queries';
 
 
-const WS_PORT = 5001;
+const WS_PORT = 5000;
 const HTTP_PORT =5003
 const app = express();
 const wss = new WebSocketServer({ port: WS_PORT });
