@@ -28,9 +28,9 @@ export class SubscriptionManager {
         try {
             await this.redisClient.connect();
             await this.publishClient.connect();  // Ensure publishClient is connected
-            console.log("Redis clients connected successfully");
+            console.log("Redis clients connected successfully 🚀 😄");
         } catch (error) {
-            console.error("Error connecting to Redis:", error);
+            console.error("Error connecting to Redis 🙁:", error);
         }
 
         console.log("Redis-->>", `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`)
