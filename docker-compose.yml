@@ -5,7 +5,7 @@ services:
     build: .
     # image: beyondhuman6969/estimate:1.11
     ports:
-      - "5001:5001"  # WebSocket server port
+      - "5000:5000"  # WebSocket server port , 5000 -> local , 5001 -> ec2
       - "5003:5003"  # HTTP server port
     environment:
       REDIS_HOST: redis
