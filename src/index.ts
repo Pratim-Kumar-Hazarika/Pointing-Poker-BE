@@ -1,5 +1,4 @@
 require('dotenv').config();
-import express from 'express';
 import { WebSocket, WebSocketServer } from "ws";
 import { UserManager } from "./User/UserManager";
 import { SubscriptionManager } from "./Subscriptions/SubscriptionManager";
@@ -8,43 +7,29 @@ import { KafkaManager } from "./Kafka/KafkaManager";
 import { getPgVersion } from "./Db/Db";
 import { heartbeat } from './utils/ws';
 import { getTotalCounts } from './postgress/queries';
-
+import cron from "node-cron"
 
 const WS_PORT = 5000;
-const HTTP_PORT =5003
-const app = express();
 const wss = new WebSocketServer({ port: WS_PORT });
 
-app.get('/', async (req, res) => {
-  const origin = req.headers.origin;
-  //  if (origin !== 'https://estimatee.vercel.app') {
-  //   res.json({
-  //     message: "Hire me 🚀. My website: <a href='https://prratim.com' target='_blank'>prratim.com</a>. My Email: <a href='mailto:prratimhazarika@gmail.com'>prratimhazarika@gmail.com</a>"
-  //   });
-  //   return;
-  // }
-  try {
-    const data = await getTotalCounts()
-    res.json({
-    status:200,
-    data:data
-  })
-  } catch (error) {
-    res.json({
-      status:400,
-      error:'error'
-    })
-  }
-});
+let history = {
+  totalUsers: 0,
+  totalVotes: 0,
+  totalSessions: 0,
+}
 
+//Initialize Kafka
+KafkaManager.getInstance()
+//Initialize Kafka
+getPgVersion();
 
 wss.on("connection", (ws, request) => {
   const origin = request.headers.origin;
 
-//   if (origin !== 'https://estimatee.vercel.app') {
-//     ws.close(1008, 'Forbidden: Invalid Origin');
-//     return;
-// }
+  if (origin !== 'https://estimatee.vercel.app') {
+    ws.close(1008, 'Forbidden: Invalid Origin');
+    return;
+}
 
   const aliveWs = ws as AliveWebSocket;
   aliveWs.isAlive = true;
@@ -55,13 +40,17 @@ wss.on("connection", (ws, request) => {
   });
 
   aliveWs.on("ping", () => {
-    // console.log("PING received from client");
+    console.log("PING received from client");
   });
  
   UserManager.getInstance().addUser(aliveWs);
   //Send live data
   const liveData = SubscriptionManager.getInstance().sendLiveData()
   ws.send(liveData)
+  ws.send(JSON.stringify({
+    type:"historyData",
+    data:history
+  }))
 });
 
 // Ping clients  every 5 seconds to check if they are still alive
@@ -78,19 +67,19 @@ const interval = setInterval(function ping() {
   });
 }, 5000);
 
-
-//Initialize Kafka
-KafkaManager.getInstance()
-//Initialize Kafka
-getPgVersion();
-
 // Clear interval on server close
 wss.on('close', function close() {
   clearInterval(interval);
 });
 
-// Start HTTP server
-app.listen(HTTP_PORT, () => {
-  console.log(`HTTP server started on port ${HTTP_PORT} 🚀`);
+cron.schedule('*/10 * * * *', async() => {
+  try {
+    const data = await getTotalCounts()
+    history ={...data}
+    console.log("Called cron",history)
+  } catch (error) {
+    console.log("Error")
+  }
 });
+
 console.log(`WebSocket server started on port ${WS_PORT} 🚀`);
