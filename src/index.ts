@@ -1,94 +1,85 @@
-import { WebSocketServer, WebSocket } from 'ws';
-import { createClient } from "redis"
+require('dotenv').config();
+import { WebSocket, WebSocketServer } from "ws";
+import { UserManager } from "./User/UserManager";
+import { SubscriptionManager } from "./Subscriptions/SubscriptionManager";
+import { AliveWebSocket } from "./User/types";
+import { KafkaManager } from "./Kafka/KafkaManager";
+import { getPgVersion } from "./Db/Db";
+import { heartbeat } from './utils/ws';
+import { getTotalCounts } from './postgress/queries';
+import cron from "node-cron"
 
-const publishClient = createClient();
-publishClient.connect();
+const WS_PORT = 5000;
+const wss = new WebSocketServer({ port: WS_PORT });
 
-const subscribeClient = createClient();
-subscribeClient.connect();
-
-const wss = new WebSocketServer({ port: 8080 });
-
-const subscriptions: {[key: string]: {
-    ws: WebSocket,
-    rooms: string[]
-}} = {
-
+let history = {
+  totalUsers: 0,
+  totalVotes: 0,
+  totalSessions: 0,
 }
 
-wss.on('connection', function connection(userSocket) {
-    const id = randomId();
-    subscriptions[id] = {
-        ws: userSocket,
-        rooms: []
-    }
-  
-    userSocket.on('message', function message(data) {
-        const parsedMessage = JSON.parse(data as unknown as string);
-        if (parsedMessage.type === "SUBSCRIBE") {
-            subscriptions[id].rooms.push(parsedMessage.room);
-            if (oneUserSubscribedTo(parsedMessage.room)) {
-                console.log("subscribing on the pub sub to room " + parsedMessage.room);
-                subscribeClient.subscribe(parsedMessage.room, (message) => {
-                    const parsedMessage = JSON.parse(message);
-                    Object.keys(subscriptions).forEach((userId) => {
-                        const {ws, rooms} = subscriptions[userId];
-                        if (rooms.includes(parsedMessage.room)) {
-                            ws.send(parsedMessage.message);
-                        }
-                    })
-                })
-            }
-        }
-        
-        if (parsedMessage.type === "UNSUBSCRIBE") {
-            subscriptions[id].rooms = subscriptions[id].rooms.filter(x => x !== parsedMessage.room)
-            if (lastPersonLeftRoom(parsedMessage.room)) {
-                console.log("unsubscribing from pub sub on room" + parsedMessage.room);
-                subscribeClient.unsubscribe(parsedMessage.room);
-            }
-        }
+//Initialize Kafka
+KafkaManager.getInstance()
+//Initialize Kafka
+getPgVersion();
 
-        if (parsedMessage.type === "sendMessage") {
-            const message = parsedMessage.message;
-            const roomId = parsedMessage.room;
-            
-            publishClient.publish(roomId, JSON.stringify({
-                type: "sendMessage",
-                room: roomId,
-                message
-            }))
-        }
-    });
+wss.on("connection", (ws, request) => {
+  const origin = request.headers.origin;
 
+  if (origin !== 'https://estimatee.vercel.app') {
+    ws.close(1008, 'Forbidden: Invalid Origin');
+    return;
+}
+
+  const aliveWs = ws as AliveWebSocket;
+  aliveWs.isAlive = true;
+
+  // When the server receives a pong, call the heartbeat function
+  aliveWs.on('pong', function() {
+    heartbeat.call(aliveWs); // Call heartbeat to mark the connection as alive
+  });
+
+  aliveWs.on("ping", () => {
+    console.log("PING received from client");
+  });
+ 
+  UserManager.getInstance().addUser(aliveWs);
+  //Send live data
+  const liveData = SubscriptionManager.getInstance().sendLiveData()
+  ws.send(liveData)
+  ws.send(JSON.stringify({
+    type:"historyData",
+    data:history
+  }))
 });
 
-function oneUserSubscribedTo(roomId: string) {
-    let totalInterestedPeople = 0;
-    Object.keys(subscriptions).map(userId => {
-        if (subscriptions[userId].rooms.includes(roomId)) {
-            totalInterestedPeople++;
-        }
-    })
-    if (totalInterestedPeople == 1) {
-        return true;
-    }
-    return false;
-}
+// Ping clients  every 5 seconds to check if they are still alive
+const interval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws: WebSocket) {
+    const aliveWs = ws as AliveWebSocket;
+    
+    // If the client hasn't responded to the last ping, terminate the connection
+    if (aliveWs.isAlive === false) return aliveWs.terminate();
 
-function lastPersonLeftRoom(roomId: string) {
-    let totalInterestedPeople = 0;
-    Object.keys(subscriptions).map(userId => {
-        if (subscriptions[userId].rooms.includes(roomId)) {
-            totalInterestedPeople++;
-        }
-    })
-    if (totalInterestedPeople == 0) {
-        return true;
-    }
-    return false;
-}
+    // Mark the connection as not alive and send a ping
+    aliveWs.isAlive = false;
+    aliveWs.ping();
+  });
+}, 5000);
 
-function randomId() {
-    return Math.random();
-}
+// Clear interval on server close
+wss.on('close', function close() {
+  clearInterval(interval);
+});
+
+cron.schedule('*/10 * * * *', async() => {
+  try {
+    const data = await getTotalCounts()
+    history ={...data}
+    console.log("Called cron",history)
+  } catch (error) {
+    console.log("Error")
+  }
+});
+
+console.log(`WebSocket server started on port ${WS_PORT} 🚀`);
